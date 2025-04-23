@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>API Funcionários - Frontend</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; }
+    input, button { margin: 5px; padding: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>Funcionários</h1>
+
+  <form id="form-funcionario">
+    <input type="hidden" id="id" />
+    <input type="text" id="nome" placeholder="Nome" required />
+    <input type="text" id="cargo" placeholder="Cargo" required />
+    <input type="number" id="salario" placeholder="Salário" step="0.01" required />
+    <button type="submit">Salvar</button>
+    <button type="button" onclick="resetForm()">Cancelar</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Nome</th><th>Cargo</th><th>Salário</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-funcionarios"></tbody>
+  </table>
+
+  <script>
+    const apiUrl = 'http://localhost:3000/funcionarios';
+
+    async function carregarFuncionarios() {
+      const res = await fetch(apiUrl);
+      const funcionarios = await res.json();
+
+      const tabela = document.getElementById('tabela-funcionarios');
+      tabela.innerHTML = '';
+      funcionarios.forEach(f => {
+        tabela.innerHTML += `
+          <tr>
+            <td>${f.id}</td>
+            <td>${f.nome}</td>
+            <td>${f.cargo}</td>
+            <td>R$ ${f.salario.toFixed(2)}</td>
+            <td>
+              <button onclick="editar(${f.id})">Editar</button>
+              <button onclick="remover(${f.id})">Remover</button>
+            </td>
+          </tr>`;
+      });
+    }
+
+    async function editar(id) {
+      const res = await fetch(`${apiUrl}/${id}`);
+      const f = await res.json();
+      document.getElementById('id').value = f.id;
+      document.getElementById('nome').value = f.nome;
+      document.getElementById('cargo').value = f.cargo;
+      document.getElementById('salario').value = f.salario;
+    }
+
+    async function remover(id) {
+      if (confirm('Tem certeza que deseja remover?')) {
+        await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+        carregarFuncionarios();
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('form-funcionario').reset();
+      document.getElementById('id').value = '';
+    }
+
+    document.getElementById('form-funcionario').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('id').value;
+      const funcionario = {
+        nome: document.getElementById('nome').value,
+        cargo: document.getElementById('cargo').value,
+        salario: parseFloat(document.getElementById('salario').value)
+      };
+
+      if (id) {
+        await fetch(`${apiUrl}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(funcionario)
+        });
+      } else {
+        await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(funcionario)
+        });
+      }
+
+      resetForm();
+      carregarFuncionarios();
+    });
+
+    carregarFuncionarios();
+  </script>
+</body>
+</html>
