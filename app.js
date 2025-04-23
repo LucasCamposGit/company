@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const funcionariosRoutes = require('./routes/funcionarios');
+const funcionariosRoutes = require('./routes/employees');
 const { swaggerUi, specs } = require('./swagger/swagger');
 
 app.use(express.json());
