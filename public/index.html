@@ -4,34 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>API Funcionários - Frontend</title>
-  <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; }
-    input, button { margin: 5px; padding: 5px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #f0f0f0; }
-  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h1>Funcionários</h1>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-4xl bg-white shadow-lg rounded-xl p-6">
+    <h1 class="text-2xl font-bold mb-6 text-gray-800 text-center">Gerenciamento de Funcionários</h1>
 
-  <form id="form-funcionario">
-    <input type="hidden" id="id" />
-    <input type="text" id="nome" placeholder="Nome" required />
-    <input type="text" id="cargo" placeholder="Cargo" required />
-    <input type="number" id="salario" placeholder="Salário" step="0.01" required />
-    <button type="submit">Salvar</button>
-    <button type="button" onclick="resetForm()">Cancelar</button>
-  </form>
+    <form id="form-funcionario" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <input type="hidden" id="id" />
+      <input id="nome" type="text" placeholder="Nome" required class="border p-2 rounded-md focus:outline-none focus:ring focus:border-blue-400 col-span-1 md:col-span-2" />
+      <input id="cargo" type="text" placeholder="Cargo" required class="border p-2 rounded-md focus:outline-none focus:ring focus:border-blue-400" />
+      <input id="salario" type="number" step="0.01" placeholder="Salário" required class="border p-2 rounded-md focus:outline-none focus:ring focus:border-blue-400" />
+      <div class="col-span-full flex gap-2 justify-end">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">Salvar</button>
+        <button type="button" onclick="resetForm()" class="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500 transition">Cancelar</button>
+      </div>
+    </form>
 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th><th>Nome</th><th>Cargo</th><th>Salário</th><th>Ações</th>
-      </tr>
-    </thead>
-    <tbody id="tabela-funcionarios"></tbody>
-  </table>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-left border border-gray-300 rounded-md">
+        <thead class="bg-gray-200 text-gray-700">
+          <tr>
+            <th class="p-3 border border-gray-300">ID</th>
+            <th class="p-3 border border-gray-300">Nome</th>
+            <th class="p-3 border border-gray-300">Cargo</th>
+            <th class="p-3 border border-gray-300">Salário</th>
+            <th class="p-3 border border-gray-300">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-funcionarios" class="text-gray-800 bg-white">
+          <!-- Funcionários serão inseridos aqui -->
+        </tbody>
+      </table>
+    </div>
+  </div>
 
   <script>
     const apiUrl = 'http://localhost:3000/funcionarios';
@@ -42,16 +48,23 @@
 
       const tabela = document.getElementById('tabela-funcionarios');
       tabela.innerHTML = '';
+
+      if (!Array.isArray(funcionarios)) {
+        alert('Erro ao carregar funcionários. Verifique o console.');
+        console.error('Resposta inesperada:', funcionarios);
+        return;
+      }
+
       funcionarios.forEach(f => {
         tabela.innerHTML += `
-          <tr>
-            <td>${f.id}</td>
-            <td>${f.nome}</td>
-            <td>${f.cargo}</td>
-            <td>R$ ${f.salario.toFixed(2)}</td>
-            <td>
-              <button onclick="editar(${f.id})">Editar</button>
-              <button onclick="remover(${f.id})">Remover</button>
+          <tr class="hover:bg-gray-50">
+            <td class="p-3 border border-gray-300">${f.id}</td>
+            <td class="p-3 border border-gray-300">${f.nome}</td>
+            <td class="p-3 border border-gray-300">${f.cargo}</td>
+            <td class="p-3 border border-gray-300">R$ ${f.salario.toFixed(2)}</td>
+            <td class="p-3 border border-gray-300 space-x-2">
+              <button onclick="editar(${f.id})" class="bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
+              <button onclick="remover(${f.id})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">Remover</button>
             </td>
           </tr>`;
       });
@@ -87,19 +100,14 @@
         salario: parseFloat(document.getElementById('salario').value)
       };
 
-      if (id) {
-        await fetch(`${apiUrl}/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(funcionario)
-        });
-      } else {
-        await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(funcionario)
-        });
-      }
+      const config = {
+        method: id ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(funcionario)
+      };
+
+      const url = id ? `${apiUrl}/${id}` : apiUrl;
+      await fetch(url, config);
 
       resetForm();
       carregarFuncionarios();
